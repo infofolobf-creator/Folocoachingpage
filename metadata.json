@@ -1,0 +1,6 @@
+{
+  "name": "FOLO Coaching",
+  "description": "EdTech Offline-First application for FOLO Coaching & Formation - Leader-Animateur Serviteur",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

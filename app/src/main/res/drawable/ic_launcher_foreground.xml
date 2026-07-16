@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Star Ray elements representing African wisdom leadership radiating -->
+    <path
+        android:fillColor="#FFFFD700"
+        android:pathData="M54,20l3,10l10,3l-10,3l-3,10l-3,-10l-10,-3l10,-3z" />
+    <path
+        android:fillColor="#FFFFD700"
+        android:pathData="M24,54l2,6l6,2l-6,2l-2,6l-2,-6l-6,-2l6,-2z" />
+    <path
+        android:fillColor="#FFFFD700"
+        android:pathData="M84,54l2,6l6,2l-6,2l-2,6l-2,-6l-6,-2l6,-2z" />
+    <!-- Center Boussole compass Dial -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,32 A22,22 0,1,1 53.9,32 Z" />
+    <!-- North Needle (Acre Terracotta / Gold) -->
+    <path
+        android:fillColor="#FFFAF6EE"
+        android:pathData="M54,54 L50,44 L54,34 L58,44 Z" />
+    <path
+        android:fillColor="#FFD4AF37"
+        android:pathData="M54,54 L50,64 L54,74 L58,64 Z" />
+    <path
+        android:fillColor="#FFFAF6EE"
+        android:pathData="M54,54 L64,50 L74,54 L64,58 Z" />
+    <path
+        android:fillColor="#FFD4AF37"
+        android:pathData="M54,54 L44,50 L34,54 L44,58 Z" />
+    <!-- Center Pivot Dot -->
+    <path
+        android:fillColor="#FFFFD700"
+        android:pathData="M54,51 A3,3 0,1,1 53.9,51 Z" />
+</vector>
