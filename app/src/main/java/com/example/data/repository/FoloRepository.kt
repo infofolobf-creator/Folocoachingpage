@@ -8,12 +8,26 @@ class FoloRepository(
     private val boussoleDao: BoussoleDao,
     private val decideDao: DecideDao,
     private val levelAssessmentDao: LevelAssessmentDao,
-    private val moduleProgressDao: ModuleProgressDao
+    private val moduleProgressDao: ModuleProgressDao,
+    private val prospectDao: ProspectDao
 ) {
     val boussoleFlow: Flow<BoussoleEntity?> = boussoleDao.getBoussole()
     val decideEntriesFlow: Flow<List<DecideEntity>> = decideDao.getAllDecideEntries()
     val assessmentsFlow: Flow<List<LevelAssessmentEntity>> = levelAssessmentDao.getAssessments()
     val progressesFlow: Flow<List<ModuleProgressEntity>> = moduleProgressDao.getProgresses()
+    val prospectsFlow: Flow<List<ProspectEntity>> = prospectDao.getAllProspects()
+
+    suspend fun addProspect(prospect: ProspectEntity) {
+        prospectDao.insert(prospect)
+    }
+
+    suspend fun updateProspect(prospect: ProspectEntity) {
+        prospectDao.update(prospect)
+    }
+
+    suspend fun deleteProspectById(id: Int) {
+        prospectDao.deleteById(id)
+    }
 
     suspend fun saveBoussole(nord: String, sud: String, est: String, ouest: String) {
         boussoleDao.insertOrUpdate(

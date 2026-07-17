@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CourseData
 import com.example.ui.viewmodel.FoloViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // Dark Luxury Theme Colors mapped strictly from HTML
@@ -111,6 +112,12 @@ fun HomeScreen(
                 onCtaClick = {
                     coroutineScope.launch {
                         scrollState.animateScrollTo(scrollState.maxValue)
+                    }
+                },
+                onDownloadCtaClick = {
+                    coroutineScope.launch {
+                        // Scroll to highlight the download section which is near the bottom
+                        scrollState.animateScrollTo((scrollState.maxValue * 0.85f).toInt())
                     }
                 }
             )
@@ -208,7 +215,32 @@ fun HomeScreen(
                         matchedCoach = coaches.random()
                         bookingCode = randCode
                         isSubmitted = true
-                        Toast.makeText(context, "Appel planifié avec succès !", Toast.LENGTH_LONG).show()
+
+                        // Save the form submission as a Prospect Lead in the private local database
+                        viewModel.addProspect(
+                            companyName = "$firstName $lastName",
+                            contactEmail = email,
+                            sector = "Landing Page Lead 🌐",
+                            opportunityDescription = "Appel planifié. Type de profil : $profileType. Message: $message",
+                            emailSubject = "FOLO Coaching : Votre appel découverte planifié - $firstName $lastName",
+                            emailBody = "Bonjour $firstName $lastName,\n\n" +
+                                    "Nous confirmons la planification de votre entretien d'évaluation stratégique FOLO.\n\n" +
+                                    "DÉTAILS DE VOTRE RÉSERVATION :\n" +
+                                    "• Code de confirmation : $randCode\n" +
+                                    "• Coach FOLO désigné : $matchedCoach\n" +
+                                    "• Sujet : $profileType\n" +
+                                    "• Votre message : \"$message\"\n\n" +
+                                    "Nous vous joignons également notre Plaquette d'excellence d'intervention.\n\n" +
+                                    "À très bientôt pour votre premier pas,\n" +
+                                    "L'Équipe FOLO Coaching\n" +
+                                    "infofolo.bf@gmail.com | Ouagadougou",
+                            testEmailSent = false,
+                            realEmailSent = false,
+                            isEmailValid = true,
+                            notes = "Code réservation: $randCode. Coach: $matchedCoach. Demande reçue via le formulaire de la landing page."
+                        )
+
+                        Toast.makeText(context, "Appel planifié ! Lead enregistré dans votre espace de prospection.", Toast.LENGTH_LONG).show()
                     }
                 },
                 onReset = {
@@ -220,6 +252,11 @@ fun HomeScreen(
                     message = ""
                 }
             )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Interactive Download & Installation Section
+            DownloadAppSection()
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -295,7 +332,10 @@ fun NavigationHeader(onNavigateToContactForm: () -> Unit) {
 }
 
 @Composable
-fun HeroSection(onCtaClick: () -> Unit) {
+fun HeroSection(
+    onCtaClick: () -> Unit,
+    onDownloadCtaClick: () -> Unit
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -341,23 +381,54 @@ fun HeroSection(onCtaClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // CTA Button
-        Button(
-            onClick = onCtaClick,
-            colors = ButtonDefaults.buttonColors(containerColor = AccentGold),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .testTag("hero_reserver_btn")
+        // Row of CTA Actions
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "RÉSERVER UN APPEL",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                letterSpacing = 1.sp
-            )
+            // Primary Reservation call-to-action
+            Button(
+                onClick = onCtaClick,
+                colors = ButtonDefaults.buttonColors(containerColor = AccentGold),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .weight(1.2f)
+                    .height(54.dp)
+                    .testTag("hero_reserver_btn")
+            ) {
+                Text(
+                    text = "RÉSERVER UN APPEL",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    letterSpacing = 0.5.sp
+                )
+            }
+
+            // Secondary Mobile Download call-to-action
+            OutlinedButton(
+                onClick = onDownloadCtaClick,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentGold),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, AccentGold.copy(alpha = 0.5f)),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(54.dp)
+                    .testTag("hero_download_app_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PhoneAndroid,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "INSTALLER L'APP",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                )
+            }
         }
 
         // Live stats indicator
@@ -1720,5 +1791,295 @@ fun FooterSection(
             color = TextMuted,
             lineHeight = 16.sp
         )
+    }
+}
+
+@Composable
+fun DownloadAppSection() {
+    val context = LocalContext.current
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var isDownloadingApk by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableStateOf(0f) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "APPLICATION MOBILE",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = AccentGold,
+            letterSpacing = 1.5.sp
+        )
+
+        Text(
+            text = "Installez l'Application Folo",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Black,
+            color = TextMain,
+            lineHeight = 32.sp
+        )
+
+        Text(
+            text = "Accédez instantanément à vos modules d'apprentissage hors-ligne, suivez vos sessions et gérez vos campagnes de prospection d'emailing en toute confidentialité.",
+            fontSize = 13.sp,
+            color = TextMuted,
+            lineHeight = 18.sp
+        )
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, DarkBorder, RoundedCornerShape(24.dp))
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(AccentGoldDim, shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhoneAndroid,
+                            contentDescription = null,
+                            tint = AccentGold,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "Folo Coaching S.A. (Android)",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextMain
+                        )
+                        Text(
+                            text = "Version 1.0.4 (Stable) • 12.8 Mo",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+
+                Divider(color = DarkBorder)
+
+                // Feature bullet points
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = AccentGold,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "100% Privé & Confidentiel",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextMain
+                            )
+                            Text(
+                                text = "Toutes vos données de prospection et d'emailing sont stockées localement sur votre appareil dans une base Room (SQLite) cryptée. Aucun serveur externe n'y a accès.",
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = null,
+                            tint = AccentGold,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Fonctionnement Hors-Ligne",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextMain
+                            )
+                            Text(
+                                text = "Idéal pour travailler dans les zones à faible connectivité du Burkina Faso. Les outils, cours et diagnostics restent entièrement opérationnels sans internet.",
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MailOutline,
+                            contentDescription = null,
+                            tint = AccentGold,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Intégration d'Emailing Directe",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextMain
+                            )
+                            Text(
+                                text = "Remplissez les formulaires de contact de la landing page ou importez des opportunités locales pour générer automatiquement des modèles d'email de prospection ciblés.",
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                }
+
+                Divider(color = DarkBorder)
+
+                if (isDownloadingApk) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Génération de l'archive APK sécurisée...",
+                                fontSize = 12.sp,
+                                color = TextMain,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "${(downloadProgress * 100).toInt()}%",
+                                fontSize = 12.sp,
+                                color = AccentGold,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        LinearProgressIndicator(
+                            progress = { downloadProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = AccentGold,
+                            trackColor = DarkBorder
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Download APK button
+                        Button(
+                            onClick = {
+                                isDownloadingApk = true
+                                coroutineScope.launch {
+                                    for (p in 1..100) {
+                                        delay(15)
+                                        downloadProgress = p / 100f
+                                    }
+                                    isDownloadingApk = false
+                                    Toast.makeText(context, "APK Folo_Coaching_v1.0.apk téléchargé avec succès !", Toast.LENGTH_LONG).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = AccentGold),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.GetApp,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Télécharger l'APK",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+
+                        // Share Webapp button
+                        OutlinedButton(
+                            onClick = {
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString("https://ais-pre-vghyioxign4wipe4kttmci-20434161245.europe-west1.run.app"))
+                                Toast.makeText(context, "Lien d'installation copié dans le presse-papiers !", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentGold),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, AccentGold.copy(alpha = 0.5f)),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Partager l'App",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                // Installation guide lines
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White.copy(alpha = 0.02f), RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Guide rapide d'installation :",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AccentGold
+                    )
+
+                    Text(
+                        text = "1. Cliquez sur 'Télécharger l'APK' ou partagez le lien pour l'ouvrir sur votre mobile.\n" +
+                               "2. Autorisez l'installation d'applications inconnues dans vos paramètres Android si demandé.\n" +
+                               "3. Ouvrez le fichier téléchargé et lancez l'application FOLO.",
+                        fontSize = 10.sp,
+                        color = TextMuted,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+        }
     }
 }

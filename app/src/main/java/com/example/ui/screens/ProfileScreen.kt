@@ -542,7 +542,7 @@ fun ProfileScreen(
 
         // PDF Certificates graduation simulator
         Text(
-            text = "🎓 Diplôme & Certificat d'Achèvement",
+            text = "👤 Profil de l'Équipe & Certificat",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
@@ -562,7 +562,7 @@ fun ProfileScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
-                    text = "Génération du Certificat PDF d'excellence :",
+                    text = "Identité & Configuration d'Emailing :",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleSmall
                 )
@@ -570,11 +570,37 @@ fun ProfileScreen(
                 OutlinedTextField(
                     value = userName,
                     onValueChange = { viewModel.updateUserName(it) },
-                    label = { Text("Votre Nom Complet pour le Diplôme") },
+                    label = { Text("Votre Nom Complet (pour le Diplôme)") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("student_name_field"),
                     leadingIcon = { Icon(Icons.Default.Badge, contentDescription = "User Name") }
+                )
+
+                val userEmail by viewModel.userEmail.collectAsState()
+                OutlinedTextField(
+                    value = userEmail,
+                    onValueChange = { viewModel.updateUserEmail(it) },
+                    label = { Text("Email Professionnel de l'Équipe") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("student_email_field"),
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = "User Email") }
+                )
+
+                Text(
+                    text = "🔒 Note de Sécurité : Vos prospects et campagnes d'emailing sont stockés de manière 100% locale dans la base de données SQLite (Room) sécurisée de votre propre appareil. Personne d'autre n'a accès à vos données et l'envoi s'effectue directement depuis votre application de messagerie configurée.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    fontStyle = FontStyle.Italic
+                )
+
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+
+                Text(
+                    text = "Génération du Certificat PDF d'excellence :",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall
                 )
 
                 if (completionRate < 100) {

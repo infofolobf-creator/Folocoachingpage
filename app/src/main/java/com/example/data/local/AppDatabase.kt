@@ -10,7 +10,8 @@ import androidx.room.RoomDatabase
         BoussoleEntity::class,
         DecideEntity::class,
         LevelAssessmentEntity::class,
-        ModuleProgressEntity::class
+        ModuleProgressEntity::class,
+        ProspectEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -20,6 +21,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun decideDao(): DecideDao
     abstract fun levelAssessmentDao(): LevelAssessmentDao
     abstract fun moduleProgressDao(): ModuleProgressDao
+    abstract fun prospectDao(): ProspectDao
 
     companion object {
         @Volatile

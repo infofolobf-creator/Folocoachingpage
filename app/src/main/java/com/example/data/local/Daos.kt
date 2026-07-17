@@ -53,3 +53,19 @@ interface ModuleProgressDao {
     @Query("UPDATE module_progress SET downloaded = :downloaded WHERE moduleId = :moduleId")
     suspend fun updateDownload(moduleId: String, downloaded: Boolean)
 }
+
+@Dao
+interface ProspectDao {
+    @Query("SELECT * FROM prospects ORDER BY timestamp DESC")
+    fun getAllProspects(): Flow<List<ProspectEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(prospect: ProspectEntity)
+
+    @Update
+    suspend fun update(prospect: ProspectEntity)
+
+    @Query("DELETE FROM prospects WHERE id = :id")
+    suspend fun deleteById(id: Int)
+}
+

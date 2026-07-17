@@ -43,8 +43,19 @@ fun ToolsScreen(
     initialTab: Int = 0,
     onQuizClosed: () -> Unit
 ) {
+    val userEmail by viewModel.userEmail.collectAsState()
+    val isBypassMode by viewModel.isBypassMode.collectAsState()
+    val canAccessProspection = userEmail.trim().lowercase() == "infofolo.bf@gmail.com" || isBypassMode
+
     var selectedTab by remember(initialTab) { mutableIntStateOf(initialTab) }
-    val tabs = listOf("Boussole 🧭", "DECIDE 🛠️", "5 Niveaux 📊")
+    val tabs = remember(canAccessProspection) {
+        if (canAccessProspection) {
+            listOf("Boussole 🧭", "DECIDE 🛠️", "5 Niveaux 📊", "Prospection 📧")
+        } else {
+            listOf("Boussole 🧭", "DECIDE 🛠️", "5 Niveaux 📊")
+        }
+    }
+    val activeTab = if (selectedTab >= tabs.size) tabs.size - 1 else selectedTab
 
     // Retrieve Flows
     val boussoleState by viewModel.boussole.collectAsState()
@@ -70,14 +81,14 @@ fun ToolsScreen(
         ) {
             // Upper Tools tabs selection
             TabRow(
-                selectedTabIndex = selectedTab,
+                selectedTabIndex = activeTab,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
-                        selected = selectedTab == index,
+                        selected = activeTab == index,
                         onClick = { selectedTab = index },
                         text = { Text(text = title, fontWeight = FontWeight.Bold, fontSize = 13.sp) },
                         modifier = Modifier.testTag("tools_tab_$index")
@@ -89,7 +100,7 @@ fun ToolsScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                when (selectedTab) {
+                when (activeTab) {
                     0 -> BoussoleTabContent(
                         storedBoussole = boussoleState,
                         onSave = { n, s, e, o -> viewModel.saveBoussole(n, s, e, o) }
@@ -105,6 +116,7 @@ fun ToolsScreen(
                         assessments = assessments,
                         onToggle = { lvl, checked -> viewModel.updateAssessment(lvl, checked) }
                     )
+                    3 -> ProspectionTabContent(viewModel = viewModel)
                 }
             }
         }

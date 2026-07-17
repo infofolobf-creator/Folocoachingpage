@@ -24,7 +24,8 @@ class FoloViewModel(application: Application) : AndroidViewModel(application) {
         database.boussoleDao(),
         database.decideDao(),
         database.levelAssessmentDao(),
-        database.moduleProgressDao()
+        database.moduleProgressDao(),
+        database.prospectDao()
     )
 
     private val prefs = application.getSharedPreferences("folo_prefs", android.content.Context.MODE_PRIVATE)
@@ -34,6 +35,12 @@ class FoloViewModel(application: Application) : AndroidViewModel(application) {
             repository.ensurePreseededData(CourseData.modules.map { it.id })
         }
     }
+
+    val prospects: StateFlow<List<com.example.data.local.ProspectEntity>> = repository.prospectsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     val boussole: StateFlow<BoussoleEntity?> = repository.boussoleFlow.stateIn(
         scope = viewModelScope,
@@ -68,6 +75,9 @@ class FoloViewModel(application: Application) : AndroidViewModel(application) {
     private val _userName = MutableStateFlow(prefs.getString("user_name", "Kaboré Ousmane") ?: "Kaboré Ousmane")
     val userName = _userName.asStateFlow()
 
+    private val _userEmail = MutableStateFlow(prefs.getString("user_email", "infofolo.bf@gmail.com") ?: "infofolo.bf@gmail.com")
+    val userEmail = _userEmail.asStateFlow()
+
     // Subscription variables
     private val _isPremium = MutableStateFlow(prefs.getBoolean("is_premium", false))
     val isPremium = _isPremium.asStateFlow()
@@ -92,6 +102,11 @@ class FoloViewModel(application: Application) : AndroidViewModel(application) {
     fun updateUserName(name: String) {
         _userName.value = name
         prefs.edit().putString("user_name", name).apply()
+    }
+
+    fun updateUserEmail(email: String) {
+        _userEmail.value = email
+        prefs.edit().putString("user_email", email).apply()
     }
 
     private val _downloadingState = MutableStateFlow<Map<String, Int>>(emptyMap())
@@ -187,6 +202,48 @@ class FoloViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteDownloadedModule(moduleId: String) {
         viewModelScope.launch {
             repository.updateModuleDownload(moduleId, false)
+        }
+    }
+
+    fun addProspect(
+        companyName: String,
+        contactEmail: String,
+        sector: String,
+        opportunityDescription: String,
+        emailSubject: String,
+        emailBody: String,
+        testEmailSent: Boolean = false,
+        realEmailSent: Boolean = false,
+        isEmailValid: Boolean = true,
+        notes: String = ""
+    ) {
+        viewModelScope.launch {
+            repository.addProspect(
+                com.example.data.local.ProspectEntity(
+                    companyName = companyName,
+                    contactEmail = contactEmail,
+                    sector = sector,
+                    opportunityDescription = opportunityDescription,
+                    emailSubject = emailSubject,
+                    emailBody = emailBody,
+                    testEmailSent = testEmailSent,
+                    realEmailSent = realEmailSent,
+                    isEmailValid = isEmailValid,
+                    notes = notes
+                )
+            )
+        }
+    }
+
+    fun updateProspect(prospect: com.example.data.local.ProspectEntity) {
+        viewModelScope.launch {
+            repository.updateProspect(prospect)
+        }
+    }
+
+    fun deleteProspect(id: Int) {
+        viewModelScope.launch {
+            repository.deleteProspectById(id)
         }
     }
 }

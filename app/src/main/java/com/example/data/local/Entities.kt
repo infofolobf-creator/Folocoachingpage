@@ -37,3 +37,20 @@ data class ModuleProgressEntity(
     val completed: Boolean = false,
     val downloaded: Boolean = false
 )
+
+@Entity(tableName = "prospects")
+data class ProspectEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val companyName: String,
+    val contactEmail: String,
+    val sector: String, // e.g. "PME", "Grande Entreprise", "ONG", "Public"
+    val opportunityDescription: String,
+    val emailSubject: String,
+    val emailBody: String,
+    val testEmailSent: Boolean = false,
+    val realEmailSent: Boolean = false,
+    val isEmailValid: Boolean = true,
+    val notes: String = "",
+    val timestamp: Long = System.currentTimeMillis()
+)
+
